@@ -1,0 +1,30 @@
+#!/bin/sh
+
+# SPDX-PackageSummary: finnix-live-build
+# SPDX-FileComment: initramfs-live-uuid
+# SPDX-FileCopyrightText: Copyright (C) 2024 Ryan Finnie
+# SPDX-License-Identifier: MPL-2.0
+
+set -e
+
+# (SC1091) Do not attempt to read file when linting
+# shellcheck disable=SC1091
+. /usr/share/initramfs-tools/hook-functions
+
+if [ -e /etc/os-release ]; then
+    # (SC2043) Remove if multiple vars are pulled in
+    # shellcheck disable=SC2043
+    for i in BUILD_UUID; do
+        read -r "${i?}" || true
+    done <<EOM
+$(
+        # (SC1091) Do not attempt to read os-release when linting
+        # shellcheck disable=SC1091
+        . /etc/os-release
+        echo "$BUILD_UUID"
+    )
+EOM
+    if [ -n "${BUILD_UUID}" ]; then
+        echo "${BUILD_UUID}" >"${DESTDIR}/conf/uuid.conf"
+    fi
+fi
